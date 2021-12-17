@@ -216,7 +216,7 @@ namespace NtpTests.utilities.serialization
 
             try
             {
-                using (var stream = new FileStream(filePath, FileMode.Open))
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     var mySerializer = new DataContractJsonSerializer(obj.GetType(), supportedTypes);
                     mySerializer.WriteObject(stream, obj);
