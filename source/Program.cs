@@ -1,4 +1,6 @@
 ﻿using NtpTests.model;
+using NtpTests.model.network;
+using NtpTests.service;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -9,15 +11,35 @@ namespace NtpTests
     {
         static void Main(string[] args)
         {
+            // Example on how to access NTP Server programatically
             tryGetInfoFromYortNTP();
 
-            tryQueryLocalNTP();
+            // Example on how to query local time service
+            var ntpInfo = tryQueryLocalNTP();
+
+            // Wrapper for return address info, may be useful for configuration purposes when customers use reverse proxies and such
+            var recipient = new NetworkRecipient { Hostname = "localhost", PrimaryPort = 54790, BackupPort = 58248 };
+
+            // JSON string of a message to be sent across network, with data contents compressed and encrypted
+            var preparedMessage = SecureNtpMessageExchange.PrepareMessageForSending(ntpInfo, recipient, NtpNetworkRequestKind.Query, NtpNetworkMessageVersion.Prototype);
+
+            // Actually sending this message to a client and receiving a reply is left as an exercise to the reader
+            var receivedMessage = preparedMessage;
+
+            // How to unpack such a received message
+            if (!SecureNtpMessageExchange.TryParseMessage(receivedMessage, out var requestKind, out var requestVersion, out var sender, out var data))
+            {
+                Console.WriteLine("Could not parse received message");
+                return;
+            }
+
+            Console.WriteLine($"Received {requestKind} request via protocol version {requestVersion} from sender {sender?.Hostname}:{sender?.PrimaryPort}");
         }
 
         /// <summary>
         /// Get information about NTP status from local service
         /// </summary>
-        private static void tryQueryLocalNTP()
+        private static TimeSettings tryQueryLocalNTP()
         {
             var result = GetNtpSettingInfo();
 
@@ -39,6 +61,8 @@ namespace NtpTests
                     Console.WriteLine($"Leap indicator: {result.LeapIndicator}");
                     break;
             }
+
+            return result;
         }
 
         /// <summary>

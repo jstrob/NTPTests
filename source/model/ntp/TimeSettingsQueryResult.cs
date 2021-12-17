@@ -24,5 +24,6 @@
         /// Query Result is in unexpected format
         /// </summary>
         QueryParserException
+
     }
 }
